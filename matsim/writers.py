@@ -298,8 +298,9 @@ class VehiclesWriter(XmlWriter):
     def start_vehicle_definitions(self, attributes: Dict[str, str] = None):
         self._require_scope(self.NO_SCOPE)
         self._write_line('<?xml version="1.0" encoding="utf-8"?>')
-        self._write_line('<!DOCTYPE vehicleDefinitions SYSTEM "http://www.matsim.org/files/dtd/vehicleDefinitions_v2.0.dtd">')
-        self._write_line('<vehicleDefinitions>')
+        self._write_line('<vehicleDefinitions xmlns="http://www.matsim.org/files/dtd" '
+                         'xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" '
+                         'xsi:schemaLocation="http://www.matsim.org/files/dtd http://www.matsim.org/files/dtd/vehicleDefinitions_v2.0.xsd">')
         self.set_scope(self.VEHICLE_DEFINITIONS_SCOPE)
         self.indent += 1
         if attributes is not None:
@@ -311,16 +312,43 @@ class VehiclesWriter(XmlWriter):
         self._write_line('</vehicleDefinitions>')
         self.set_scope(self.FINISHED_SCOPE)
 
-    def add_vehicle_type(self, vehicle_id: Id, length: float, width: float, pce: float, network_mode: str):
+    def add_vehicle_type(self, vehicle_id: Id, description: str = None, capacity: dict = None, length: float = None,
+                         width: float = None, maximum_velocity: float = None, engine_information: dict = None,
+                         cost_information: dict = None, pce: float = None, network_mode: str = None,
+                         flow_efficiency_factor: float = None):
         self._require_scope(self.VEHICLE_DEFINITIONS_SCOPE)
         self._write_line(f'<vehicleType id="{vehicle_id}">')
         self.indent += 1
-        self._write_line(f'<length meter="{length}"/>')
-        self._write_line(f'<width meter="{width}"/>')
-        self._write_line(f'<passengerCarEquivalents pce="{pce}"/>')
-        self._write_line(f'<networkMode networkMode="{network_mode}"/>')
+        if description:
+            self._write_line(f'<description>{description}</description>')
+        if capacity:
+            self._write_complex_type('capacity', capacity)
+        if length is not None:
+            self._write_complex_type('length', {'meter': length})
+        if width is not None:
+            self._write_complex_type('width', {'meter': width})
+        if maximum_velocity is not None:
+            self._write_complex_type('maximumVelocity', {'meterPerSecond': maximum_velocity})
+        if engine_information:
+            self._write_complex_type('engineInformation', engine_information)
+        if cost_information:
+            self._write_complex_type('costInformation', cost_information)
+        if pce is not None:
+            self._write_complex_type('passengerCarEquivalents', {'pce': pce})
+        if network_mode:
+            self._write_complex_type('networkMode', {'networkMode': network_mode})
+        if flow_efficiency_factor is not None:
+            self._write_complex_type('flowEfficiencyFactor', {'factor': flow_efficiency_factor})
         self.indent -= 1
         self._write_line('</vehicleType>')
+
+    def _write_complex_type(self, tag_name: str, attributes: dict):
+        self._write_indent()
+        self._write(f'<{tag_name}')
+        for attr_name, attr_value in attributes.items():
+            if attr_value is not None:
+                self._write(f' {attr_name}="{attr_value}"')
+        self._write('/>\n')
 
     def add_vehicle(self, vehicle_id: Id, vehicle_type: str):
         self._require_scope(self.VEHICLE_DEFINITIONS_SCOPE)
