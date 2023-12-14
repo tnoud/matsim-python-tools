@@ -245,6 +245,15 @@ class HouseholdsWriter(XmlWriter):
         self._require_scope(self.HOUSEHOLD_SCOPE)
         self._write_line(f'<income currency="CHF" period="month">{income}</income>')
 
+    def add_vehicles(self, vehicle_ids: Collection[Id]):
+        self._require_scope(self.HOUSEHOLD_SCOPE)
+        self._write_line('<vehicles>')
+        self.indent += 1
+        for vehicle_id in vehicle_ids:
+            self._write_line(f'<vehicleDefinitionId refId="{vehicle_id}" />')
+        self.indent -= 1
+        self._write_line('</vehicles>')
+
 
 class FacilitiesWriter(XmlWriter):
     FACILITIES_SCOPE = 0
