@@ -286,3 +286,42 @@ class FacilitiesWriter(XmlWriter):
         self._require_scope(self.FACILITY_SCOPE)
         self._write_line(f'<activity type="{purpose}" />')
 
+class VehiclesWriter(XmlWriter):
+    VEHICLE_DEFINITIONS_SCOPE = 0
+    FINISHED_SCOPE = 1
+    VEHICLE_TYPE_SCOPE = 2
+    VEHICLE_SCOPE = 3
+
+    def __init__(self, writer):
+        XmlWriter.__init__(self, writer)
+
+    def start_vehicle_definitions(self, attributes: Dict[str, str] = None):
+        self._require_scope(self.NO_SCOPE)
+        self._write_line('<?xml version="1.0" encoding="utf-8"?>')
+        self._write_line('<!DOCTYPE vehicleDefinitions SYSTEM "http://www.matsim.org/files/dtd/vehicleDefinitions_v2.0.dtd">')
+        self._write_line('<vehicleDefinitions>')
+        self.set_scope(self.VEHICLE_DEFINITIONS_SCOPE)
+        self.indent += 1
+        if attributes is not None:
+            self.write_preamble_attributes(attributes)
+
+    def end_vehicle_definitions(self):
+        self._require_scope(self.VEHICLE_DEFINITIONS_SCOPE)
+        self.indent -= 1
+        self._write_line('</vehicleDefinitions>')
+        self.set_scope(self.FINISHED_SCOPE)
+
+    def add_vehicle_type(self, vehicle_id: Id, length: float, width: float, pce: float, network_mode: str):
+        self._require_scope(self.VEHICLE_DEFINITIONS_SCOPE)
+        self._write_line(f'<vehicleType id="{vehicle_id}">')
+        self.indent += 1
+        self._write_line(f'<length meter="{length}"/>')
+        self._write_line(f'<width meter="{width}"/>')
+        self._write_line(f'<passengerCarEquivalents pce="{pce}"/>')
+        self._write_line(f'<networkMode networkMode="{network_mode}"/>')
+        self.indent -= 1
+        self._write_line('</vehicleType>')
+
+    def add_vehicle(self, vehicle_id: Id, vehicle_type: str):
+        self._require_scope(self.VEHICLE_DEFINITIONS_SCOPE)
+        self._write_line(f'<vehicle id="{vehicle_id}" type="{vehicle_type}"/>')
